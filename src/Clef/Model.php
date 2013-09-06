@@ -81,7 +81,7 @@ abstract class Model
     /**
      * Set the curent model's request object
      *
-     * @param \MasheryApi\Request $request Request object
+     * @param \Clef\Request $request Request object
      */
     public function setRequest(\MasheryApi\Request $request)
     {
@@ -91,7 +91,7 @@ abstract class Model
     /**
      * Get the current request object
      *
-     * @return \MasheryApi\Request object
+     * @return \Clef\Request object
      */
     public function getRequest()
     {

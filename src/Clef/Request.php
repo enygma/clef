@@ -149,7 +149,7 @@ class Request
     }
 
     /**
-     * Send the request to the Mashery API
+     * Send the request to the Clef API
      *
      * @param string $data JSON to send in request
      * @throws \InvalidArgumentException If required information is null
