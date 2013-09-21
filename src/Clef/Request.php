@@ -16,50 +16,121 @@ class Request
      */
     private $client = null;
 
+    /**
+     * Clef application ID
+     * @var string
+     */
     private $appId = null;
 
+    /**
+     * Clef application secret code
+     * @var string
+     */
     private $appSecret = null;
 
     private $accessToken = null;
 
     private $userCode = null;
 
+    /**
+     * Init the Request object
+     * 
+     * @param string $appId Application ID [optional]
+     * @param strign $appSecret Application secret [optional]
+     */
+    public function __construct($appId = null, $appSecret = null)
+    {
+        if ($appId !== null) {
+            $this->setAppId($appId);
+        }
+        if ($appSecret !== null) {
+            $this->setAppSecret($appSecret);
+        }
+    }
+
+    /**
+     * Set the user code
+     * 
+     * @param string $code User code
+     * @return \Clef\Request instance
+     */
     public function setUserCode($code)
     {
         $this->userCode = $code;
         return $this;
     }
 
+    /**
+     * Get the current user code
+     * 
+     * @return string User code
+     */
     public function getUserCode()
     {
         return $this->userCode;
     }
 
+    /**
+     * Set the access token
+     * 
+     * @param string $token Access token
+     * @return \Clef\Request instance
+     */
     public function setAccessToken($token)
     {
         $this->accessToken = $token;
         return $this;
     }
+
+    /**
+     * Get the current access token value
+     * 
+     * @return string Access token
+     */
     public function getAccessToken()
     {
         return $this->accessToken;
     }
 
+    /**
+     * Set the Clef Application ID 
+     * 
+     * @param string $appId Application ID
+     * @return \Clef\Request instance
+     */
     public function setAppId($appId)
     {
         $this->appId = $appId;
         return $this;
     }
+
+    /**
+     * Get the current Application ID
+     * 
+     * @return string Application ID
+     */
     public function getAppId()
     {
         return $this->appId;
     }
 
+    /**
+     * Set the application secret
+     * 
+     * @param string $appSecret Application secret
+     * @return \Clef\Request instance
+     */
     public function setAppSecret($appSecret)
     {
         $this->appSecret = $appSecret;
         return $this;
     }
+
+    /**
+     * Get the current application secret
+     * 
+     * @return string Application secret
+     */
     public function getAppSecret()
     {
         return $this->appSecret;
@@ -79,6 +150,7 @@ class Request
      * Set the current URL value
      *
      * @param string $url Base API URL
+     * @return \Clef\Request instance
      */
     public function setUrl($url)
     {
@@ -93,6 +165,7 @@ class Request
      * Set the HTTP client for requests (probably Guzzle)
      *
      * @param object $client HTTP client
+     * @return \Clef\Request instance
      */
     public function setClient($client)
     {
@@ -126,6 +199,11 @@ class Request
         return md5($signatureString);
     }
 
+    /**
+     * Send an authentication request to the API
+     * 
+     * @return object API JSON response decoded
+     */
     public function authenticate()
     {
         $userCode = $this->getUserCode();
