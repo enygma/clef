@@ -28,13 +28,21 @@ class Request
      */
     private $appSecret = null;
 
+    /**
+     * Current user access token
+     * @var string
+     */
     private $accessToken = null;
 
+    /**
+     * Current user's access code
+     * @var string
+     */
     private $userCode = null;
 
     /**
      * Init the Request object
-     * 
+     *
      * @param string $appId Application ID [optional]
      * @param strign $appSecret Application secret [optional]
      */
@@ -50,7 +58,7 @@ class Request
 
     /**
      * Set the user code
-     * 
+     *
      * @param string $code User code
      * @return \Clef\Request instance
      */
@@ -62,7 +70,7 @@ class Request
 
     /**
      * Get the current user code
-     * 
+     *
      * @return string User code
      */
     public function getUserCode()
@@ -72,19 +80,22 @@ class Request
 
     /**
      * Set the access token
-     * 
+     *
      * @param string $token Access token
      * @return \Clef\Request instance
      */
     public function setAccessToken($token)
     {
         $this->accessToken = $token;
+
+        // add it to the session too so it persists
+        $_SESSION['accessToken'] = $token;
         return $this;
     }
 
     /**
      * Get the current access token value
-     * 
+     *
      * @return string Access token
      */
     public function getAccessToken()
@@ -93,8 +104,8 @@ class Request
     }
 
     /**
-     * Set the Clef Application ID 
-     * 
+     * Set the Clef Application ID
+     *
      * @param string $appId Application ID
      * @return \Clef\Request instance
      */
@@ -106,7 +117,7 @@ class Request
 
     /**
      * Get the current Application ID
-     * 
+     *
      * @return string Application ID
      */
     public function getAppId()
@@ -116,7 +127,7 @@ class Request
 
     /**
      * Set the application secret
-     * 
+     *
      * @param string $appSecret Application secret
      * @return \Clef\Request instance
      */
@@ -128,7 +139,7 @@ class Request
 
     /**
      * Get the current application secret
-     * 
+     *
      * @return string Application secret
      */
     public function getAppSecret()
@@ -201,13 +212,12 @@ class Request
 
     /**
      * Send an authentication request to the API
-     * 
+     *
      * @return object API JSON response decoded
      */
-    public function authenticate()
+    public function authenticate($userCode = null)
     {
-        $userCode = $this->getUserCode();
-
+        $userCode = ($userCode == null) ? $this->getUserCode() : $userCode;
         if ($userCode === null) {
             throw new \InvalidArgumentException('User code cannot be null');
         }
@@ -219,11 +229,69 @@ class Request
             'app_secret' => $this->getAppSecret()
         );
 
-        $request = $client->post($this->getUrl().'/info/authorize');
-        $request->setBody($data, 'application/x-www-form-urlencoded');
+        $request = $client->post($this->getUrl().'/authorize');
+        $request->setBody($params, 'application/x-www-form-urlencoded');
 
         $response = $request->send();
         $result = json_decode($response->getBody(true));
+
+        if ($result !== null) {
+            $this->setAccessToken($result->access_token);
+        }
+
+        return ($result == null) ? false : $result;
+    }
+
+    /**
+     * Get the current (requesting) user's information
+     *
+     * @return mixed Either false on failure or the result on true
+     */
+    public function getUser()
+    {
+        $accessToken = $this->getAccessToken();
+        $client = $this->getClient();
+        $url = $this->getUrl();
+
+        $params = array(
+            'access_token' => $accessToken
+        );
+        $url = $url.'/info?'.http_build_query($params);
+
+        $request = $client->get($url);
+        $response = $request->send();
+
+        try {
+            $result = json_decode($response->getBody(true));
+            return $result;
+
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Log out the user
+     *
+     * @param string $logoutToken Logout token
+     * @return mixed Either false on failure or the result
+     */
+    public function logout($logoutToken)
+    {
+        $client = $this->getClient();
+        $params = array(
+            'logout_token' => $logoutToken,
+            'app_id' => $this->getAppId(),
+            'app_secret' => $this->getAppSecret()
+        );
+
+        $request = $client->post($this->getUrl().'/logout');
+        $request->setBody($params, 'application/x-www-form-urlencoded');
+
+        $response = $request->send();
+        $result = json_decode($response->getBody(true));
+
+        return ($result == null) ? false : $result;
     }
 
     /**
@@ -258,7 +326,7 @@ class Request
             'apikey' => $apiKey,
             'sig' => $this->generateSignature()
         );
-        $url = $url.'/'.$siteId.'?'.http_build_query($params);
+        $url = $url.'?'.http_build_query($params);
 
         $request = $client->post($url);
         $request->setBody($data, 'application/json');
